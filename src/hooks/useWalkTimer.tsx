@@ -108,10 +108,27 @@ export const useWalkTimer = ({ durationMinutes, audioPreference }: UseWalkTimerP
 
   const playVoiceCue = useCallback((message: string) => {
     if ('speechSynthesis' in window) {
-      const utterance = new SpeechSynthesisUtterance(message);
-      utterance.rate = 0.8;
-      utterance.volume = 0.7;
-      speechSynthesis.speak(utterance);
+      // Cancel any ongoing speech before starting new one
+      speechSynthesis.cancel();
+      
+      setTimeout(() => {
+        const utterance = new SpeechSynthesisUtterance(message);
+        utterance.rate = 0.8;
+        utterance.volume = 1.0;
+        utterance.pitch = 1.0;
+        
+        // Add error handling
+        utterance.onerror = (event) => {
+          console.error('Speech synthesis error:', event);
+        };
+        
+        utterance.onend = () => {
+          console.log(`Voice cue completed: ${message}`);
+        };
+        
+        console.log(`Playing voice cue: ${message}`);
+        speechSynthesis.speak(utterance);
+      }, 100); // Small delay to ensure cancel() takes effect
     }
   }, []);
 
