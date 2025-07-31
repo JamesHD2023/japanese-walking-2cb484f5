@@ -44,11 +44,11 @@ const Auth = () => {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="mb-4">
+          <div className="mb-4 px-8">
             <img 
               src="/lovable-uploads/38d1c796-4c12-4e11-82e0-cb298cf3b213.png" 
               alt="Japanese Walking Logo" 
-              className="mx-auto w-full max-w-lg"
+              className="w-full"
             />
           </div>
           <CardTitle className="text-2xl font-bold">Japanese Walking</CardTitle>
