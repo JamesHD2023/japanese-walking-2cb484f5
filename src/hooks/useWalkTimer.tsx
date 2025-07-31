@@ -117,16 +117,19 @@ export const useWalkTimer = ({ durationMinutes }: UseWalkTimerProps) => {
 
   const playPhaseTransition = useCallback((phase: WalkPhase) => {
     if (phase === 'fast') {
-      // Two quick beeps for fast phase
+      // Triple beeps for fast phase
       playBeep(1000, 150);
       setTimeout(() => playBeep(1000, 150), 200);
-      // Strong haptic for fast phase - two strong vibrations
-      triggerHaptic([300, 150, 300]);
+      setTimeout(() => playBeep(1000, 150), 400);
+      // Strong haptic for fast phase - three strong vibrations
+      triggerHaptic([400, 100, 400, 100, 400]);
     } else if (phase === 'slow') {
-      // One low beep for slow phase
-      playBeep(600, 300);
-      // Strong haptic for slow phase - one long vibration
-      triggerHaptic([500]);
+      // Triple beeps for slow phase
+      playBeep(600, 200);
+      setTimeout(() => playBeep(600, 200), 250);
+      setTimeout(() => playBeep(600, 200), 500);
+      // Strong haptic for slow phase - three long vibrations
+      triggerHaptic([500, 150, 500, 150, 500]);
     }
   }, [playBeep, triggerHaptic]);
 
