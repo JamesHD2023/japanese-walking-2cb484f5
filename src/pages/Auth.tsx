@@ -74,7 +74,7 @@ const Auth = () => {
         <CardHeader className="text-center">
           <div className="mb-4 px-5">
             <img 
-              src="/lovable-uploads/4a9ea1d2-2aee-45e3-8178-9dc5668dcacc.png" 
+              src="/lovable-uploads/41e5b279-c040-43ff-b859-7dd480f9a1bc.png" 
               alt="Japanese Walking Logo" 
               className="w-full"
             />
