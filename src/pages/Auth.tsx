@@ -44,6 +44,13 @@ const Auth = () => {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
+          <div className="mb-4">
+            <img 
+              src="/lovable-uploads/dfa0332b-825c-478d-ab6d-b11a991bc2f2.png" 
+              alt="Japanese Walking Logo" 
+              className="mx-auto h-20 w-auto"
+            />
+          </div>
           <CardTitle className="text-2xl font-bold">Japanese Walking</CardTitle>
           <CardDescription>
             Your companion for healthy interval walking
