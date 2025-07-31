@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Play, Pause, Square, Settings } from 'lucide-react';
 
 interface Profile {
-  audio_preference: 'beep' | 'voice';
+  audio_preference: 'beep' | 'haptic';
   subscription_status: 'trial' | 'active' | 'expired';
   trial_end_date: string;
 }
@@ -50,7 +50,7 @@ const WalkTimer = () => {
   }, [user]);
 
   // Update audio preference
-  const updateAudioPreference = async (preference: 'beep' | 'voice') => {
+  const updateAudioPreference = async (preference: 'beep' | 'haptic') => {
     if (!user) return;
 
     try {
@@ -155,10 +155,10 @@ const WalkTimer = () => {
             )}
           </div>
 
-          {/* Audio Preference */}
+          {/* Feedback Preference */}
           {canUseFeatures() && profile && (
             <div>
-              <label className="text-sm font-medium mb-2 block">Audio Cues</label>
+              <label className="text-sm font-medium mb-2 block">Feedback Cues</label>
               <div className="grid grid-cols-2 gap-2">
                 <Button
                   variant={profile.audio_preference === 'beep' ? 'default' : 'outline'}
@@ -169,12 +169,12 @@ const WalkTimer = () => {
                   Beep
                 </Button>
                 <Button
-                  variant={profile.audio_preference === 'voice' ? 'default' : 'outline'}
+                  variant={profile.audio_preference === 'haptic' ? 'default' : 'outline'}
                   size="sm"
-                  onClick={() => updateAudioPreference('voice')}
+                  onClick={() => updateAudioPreference('haptic')}
                   disabled={timer.isActive}
                 >
-                  Voice
+                  Haptic
                 </Button>
               </div>
             </div>
@@ -279,7 +279,7 @@ const WalkTimer = () => {
             <p>• Repeat this pattern for the entire duration</p>
             {canUseFeatures() && (
               <p className="text-muted-foreground mt-3">
-                Audio cues will guide you through each phase change.
+                Audio or haptic cues will guide you through each phase change.
               </p>
             )}
           </div>

@@ -17,7 +17,7 @@ interface WalkSession {
 
 interface UseWalkTimerProps {
   durationMinutes: number;
-  audioPreference: 'beep' | 'voice';
+  audioPreference: 'beep' | 'haptic';
 }
 
 export const useWalkTimer = ({ durationMinutes, audioPreference }: UseWalkTimerProps) => {
@@ -106,29 +106,12 @@ export const useWalkTimer = ({ durationMinutes, audioPreference }: UseWalkTimerP
     }
   }, []);
 
-  const playVoiceCue = useCallback((message: string) => {
-    if ('speechSynthesis' in window) {
-      // Cancel any ongoing speech before starting new one
-      speechSynthesis.cancel();
-      
-      setTimeout(() => {
-        const utterance = new SpeechSynthesisUtterance(message);
-        utterance.rate = 0.8;
-        utterance.volume = 1.0;
-        utterance.pitch = 1.0;
-        
-        // Add error handling
-        utterance.onerror = (event) => {
-          console.error('Speech synthesis error:', event);
-        };
-        
-        utterance.onend = () => {
-          console.log(`Voice cue completed: ${message}`);
-        };
-        
-        console.log(`Playing voice cue: ${message}`);
-        speechSynthesis.speak(utterance);
-      }, 100); // Small delay to ensure cancel() takes effect
+  const triggerHaptic = useCallback((pattern: number[]) => {
+    if ('vibrate' in navigator) {
+      navigator.vibrate(pattern);
+      console.log(`Triggered haptic pattern: [${pattern.join(', ')}]`);
+    } else {
+      console.log('Haptic feedback not supported');
     }
   }, []);
 
@@ -142,14 +125,16 @@ export const useWalkTimer = ({ durationMinutes, audioPreference }: UseWalkTimerP
         // One low beep for slow phase
         playBeep(600, 300);
       }
-    } else if (audioPreference === 'voice') {
+    } else if (audioPreference === 'haptic') {
       if (phase === 'fast') {
-        playVoiceCue('Walk fast');
+        // Two quick vibrations for fast phase
+        triggerHaptic([200, 100, 200]);
       } else if (phase === 'slow') {
-        playVoiceCue('Walk slow');
+        // One longer vibration for slow phase
+        triggerHaptic([400]);
       }
     }
-  }, [audioPreference, playBeep, playVoiceCue]);
+  }, [audioPreference, playBeep, triggerHaptic]);
 
   // Track last phase transition to prevent duplicates
   const lastPhaseTransitionRef = useRef<number>(-1);
