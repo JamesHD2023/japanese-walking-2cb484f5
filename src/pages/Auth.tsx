@@ -46,9 +46,9 @@ const Auth = () => {
         <CardHeader className="text-center">
           <div className="mb-4">
             <img 
-              src="/lovable-uploads/dfa0332b-825c-478d-ab6d-b11a991bc2f2.png" 
+              src="/lovable-uploads/38d1c796-4c12-4e11-82e0-cb298cf3b213.png" 
               alt="Japanese Walking Logo" 
-              className="mx-auto h-20 w-auto"
+              className="mx-auto w-full max-w-sm"
             />
           </div>
           <CardTitle className="text-2xl font-bold">Japanese Walking</CardTitle>
