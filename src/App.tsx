@@ -10,6 +10,7 @@ import WhyItWorks from "./pages/WhyItWorks";
 import About from "./pages/About";
 import Auth from "./pages/Auth";
 import TrialWelcome from "./pages/TrialWelcome";
+import History from "./pages/History";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,7 @@ const App = () => (
             <Route path="/trial-welcome" element={<TrialWelcome />} />
             <Route path="/dashboard" element={<Index />} />
             <Route path="/about" element={<About />} />
+            <Route path="/history" element={<History />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

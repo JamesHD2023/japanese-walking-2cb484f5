@@ -41,7 +41,7 @@ const Index = () => {
               <p className="text-sm text-muted-foreground">Welcome back!</p>
             </div>
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" onClick={() => navigate('/history')}>
                 <History className="h-4 w-4 mr-2" />
                 History
               </Button>
