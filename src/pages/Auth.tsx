@@ -81,7 +81,7 @@ const Auth = () => {
           </div>
           <CardTitle className="text-2xl font-bold">Japanese Walking</CardTitle>
           <CardDescription>
-            Your companion for healthy interval walking
+            Keep Moving - Stay Healthy
           </CardDescription>
         </CardHeader>
         <div className="px-6 pb-4">
