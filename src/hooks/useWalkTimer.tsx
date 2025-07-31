@@ -50,8 +50,13 @@ export const useWalkTimer = ({ durationMinutes, audioPreference }: UseWalkTimerP
   }, []);
 
   // Audio cue functions
-  const playBeep = useCallback((frequency: number = 800, duration: number = 200) => {
+  const playBeep = useCallback(async (frequency: number = 800, duration: number = 200) => {
     if (!audioContextRef.current) return;
+
+    // Resume audio context if suspended (important for mobile background)
+    if (audioContextRef.current.state === 'suspended') {
+      await audioContextRef.current.resume();
+    }
 
     const oscillator = audioContextRef.current.createOscillator();
     const gainNode = audioContextRef.current.createGain();
@@ -129,14 +134,19 @@ export const useWalkTimer = ({ durationMinutes, audioPreference }: UseWalkTimerP
     const phaseTime = timeElapsed % 180;
     const currentInterval = Math.floor(timeElapsed / 180);
 
-    // Phase transition at start of each 3-minute interval
-    if (phaseTime === 0 && timeElapsed > 0) {
+    // Phase transition at start of each 3-minute interval (use range check for mobile reliability)
+    if (phaseTime <= 2 && timeElapsed > 0) {
       const nextPhase = currentInterval % 2 === 0 ? 'fast' : 'slow';
-      setCurrentPhase(nextPhase);
-      playPhaseTransition(nextPhase);
       
-      if (nextPhase === 'fast') {
-        setIntervalsCompleted(Math.floor(currentInterval / 2));
+      // Only transition if we're not already in the correct phase
+      if (currentPhase !== nextPhase && currentPhase !== 'paused') {
+        console.log(`Phase transition at ${timeElapsed}s: ${currentPhase} -> ${nextPhase}`);
+        setCurrentPhase(nextPhase);
+        playPhaseTransition(nextPhase);
+        
+        if (nextPhase === 'fast') {
+          setIntervalsCompleted(Math.floor(currentInterval / 2));
+        }
       }
     }
   }, [durationMinutes, playPhaseTransition, sessionId, intervalsCompleted, toast]);
