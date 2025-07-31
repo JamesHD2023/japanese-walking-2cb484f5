@@ -22,12 +22,12 @@ const Landing = () => {
           <p className="text-lg text-muted-foreground">Keep Moving - Stay Healthy</p>
         </div>
 
-        {/* Learn More Button */}
+        {/* Why It Works Button */}
         <Button 
-          onClick={() => navigate('/about')}
+          onClick={() => navigate('/why-it-works')}
           className="w-full max-w-xs mx-auto"
         >
-          Learn More
+          Why it Works
         </Button>
       </div>
     </div>

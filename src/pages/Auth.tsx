@@ -41,7 +41,7 @@ const Auth = () => {
     
     const { error } = await signIn(email, password);
     if (!error) {
-      navigate('/dashboard');
+      navigate('/trial-welcome');
     }
     
     setLoading(false);
