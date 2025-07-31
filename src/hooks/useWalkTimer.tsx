@@ -93,7 +93,8 @@ export const useWalkTimer = ({ durationMinutes }: UseWalkTimerProps) => {
       oscillator.frequency.value = frequency;
       oscillator.type = 'sine';
 
-      gainNode.gain.setValueAtTime(8.0, audioContextRef.current.currentTime);
+      // Increased volume to cut through other audio
+      gainNode.gain.setValueAtTime(15.0, audioContextRef.current.currentTime);
       gainNode.gain.exponentialRampToValueAtTime(0.01, audioContextRef.current.currentTime + duration / 1000);
 
       oscillator.start(audioContextRef.current.currentTime);
@@ -117,17 +118,17 @@ export const useWalkTimer = ({ durationMinutes }: UseWalkTimerProps) => {
 
   const playPhaseTransition = useCallback((phase: WalkPhase) => {
     if (phase === 'fast') {
-      // Triple beeps for fast phase
-      playBeep(1000, 150);
-      setTimeout(() => playBeep(1000, 150), 200);
-      setTimeout(() => playBeep(1000, 150), 400);
+      // Triple beeps for fast phase - higher frequency to cut through other audio
+      playBeep(1400, 150);
+      setTimeout(() => playBeep(1400, 150), 200);
+      setTimeout(() => playBeep(1400, 150), 400);
       // Strong haptic for fast phase - three strong vibrations
       triggerHaptic([400, 100, 400, 100, 400]);
     } else if (phase === 'slow') {
-      // Triple beeps for slow phase
-      playBeep(600, 200);
-      setTimeout(() => playBeep(600, 200), 250);
-      setTimeout(() => playBeep(600, 200), 500);
+      // Triple beeps for slow phase - higher frequency to cut through other audio
+      playBeep(1000, 200);
+      setTimeout(() => playBeep(1000, 200), 250);
+      setTimeout(() => playBeep(1000, 200), 500);
       // Strong haptic for slow phase - three long vibrations
       triggerHaptic([500, 150, 500, 150, 500]);
     }
