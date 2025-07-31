@@ -49,6 +49,33 @@ const Auth = () => {
             Your companion for healthy interval walking
           </CardDescription>
         </CardHeader>
+        <div className="px-6 pb-4">
+          <div className="bg-muted/50 rounded-lg p-4 space-y-3">
+            <h4 className="font-semibold text-sm text-foreground">Why sign up?</h4>
+            <ul className="space-y-2 text-xs text-muted-foreground">
+              <li className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 bg-primary rounded-full"></div>
+                <span>Full access to all walking timers and intervals</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 bg-primary rounded-full"></div>
+                <span>Track your progress and walking history</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 bg-primary rounded-full"></div>
+                <span>Build healthy streaks and consistency</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 bg-primary rounded-full"></div>
+                <span>Monitor health benefits and improvements</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 bg-primary rounded-full"></div>
+                <span>Sync across all your devices</span>
+              </li>
+            </ul>
+          </div>
+        </div>
         <CardContent>
           <Tabs defaultValue="signin" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
