@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useBackgroundTimer } from '@/hooks/useBackgroundTimer';
 
 export type WalkPhase = 'fast' | 'slow' | 'paused' | 'stopped';
 
@@ -23,16 +24,13 @@ export const useWalkTimer = ({ durationMinutes, audioPreference }: UseWalkTimerP
   const { user } = useAuth();
   const { toast } = useToast();
   
-  const [timeElapsed, setTimeElapsed] = useState(0); // seconds
   const [currentPhase, setCurrentPhase] = useState<WalkPhase>('stopped');
   const [intervalsCompleted, setIntervalsCompleted] = useState(0);
   const [sessionId, setSessionId] = useState<string | null>(null);
   
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
-  const wakeLockRef = useRef<WakeLockSentinel | null>(null);
 
-  // Create audio context and wake lock
+  // Create audio context
   useEffect(() => {
     const initializeAudio = async () => {
       try {
@@ -50,25 +48,6 @@ export const useWalkTimer = ({ durationMinutes, audioPreference }: UseWalkTimerP
       }
     };
   }, []);
-
-  // Request wake lock when timer starts
-  const requestWakeLock = async () => {
-    try {
-      if ('wakeLock' in navigator) {
-        wakeLockRef.current = await navigator.wakeLock.request('screen');
-      }
-    } catch (error) {
-      console.error('Failed to request wake lock:', error);
-    }
-  };
-
-  // Release wake lock
-  const releaseWakeLock = () => {
-    if (wakeLockRef.current) {
-      wakeLockRef.current.release();
-      wakeLockRef.current = null;
-    }
-  };
 
   // Audio cue functions
   const playBeep = useCallback((frequency: number = 800, duration: number = 200) => {
@@ -118,6 +97,88 @@ export const useWalkTimer = ({ durationMinutes, audioPreference }: UseWalkTimerP
     }
   }, [audioPreference, playBeep, playVoiceCue]);
 
+  // Handle timer tick with phase transitions
+  const handleTimerTick = useCallback((timeElapsed: number) => {
+    const totalDuration = durationMinutes * 60;
+
+    // Check if walk is complete
+    if (timeElapsed >= totalDuration) {
+      // Complete the walk
+      if (sessionId) {
+        supabase
+          .from('walk_sessions')
+          .update({
+            completed_at: new Date().toISOString(),
+            intervals_completed: intervalsCompleted,
+            is_completed: true,
+          })
+          .eq('id', sessionId);
+
+        toast({
+          title: "Walk completed!",
+          description: `Congratulations! You completed your ${durationMinutes} minute walk.`,
+        });
+      }
+      
+      setCurrentPhase('stopped');
+      setSessionId(null);
+      return;
+    }
+
+    // Check for phase transitions (every 3 minutes = 180 seconds)
+    const phaseTime = timeElapsed % 180;
+    const currentInterval = Math.floor(timeElapsed / 180);
+
+    // Phase transition at start of each 3-minute interval
+    if (phaseTime === 0 && timeElapsed > 0) {
+      const nextPhase = currentInterval % 2 === 0 ? 'fast' : 'slow';
+      setCurrentPhase(nextPhase);
+      playPhaseTransition(nextPhase);
+      
+      if (nextPhase === 'fast') {
+        setIntervalsCompleted(Math.floor(currentInterval / 2));
+      }
+    }
+  }, [durationMinutes, playPhaseTransition, sessionId, intervalsCompleted, toast]);
+
+  const backgroundTimer = useBackgroundTimer({
+    onTick: handleTimerTick,
+    isActive: currentPhase === 'fast' || currentPhase === 'slow'
+  });
+
+  // Stop walk function
+  const stopWalk = useCallback(async () => {
+    if (!sessionId) return;
+
+    try {
+      const isCompleted = backgroundTimer.timeElapsed >= durationMinutes * 60;
+      
+      await supabase
+        .from('walk_sessions')
+        .update({
+          completed_at: new Date().toISOString(),
+          intervals_completed: intervalsCompleted,
+          is_completed: isCompleted,
+        })
+        .eq('id', sessionId);
+
+      setCurrentPhase('stopped');
+      setSessionId(null);
+      backgroundTimer.stop();
+
+      toast({
+        title: isCompleted ? "Walk completed!" : "Walk stopped",
+        description: isCompleted 
+          ? `Congratulations! You completed your ${durationMinutes} minute walk.`
+          : `Walk session ended after ${Math.floor(backgroundTimer.timeElapsed / 60)} minutes.`,
+      });
+
+    } catch (error) {
+      console.error('Failed to stop walk session:', error);
+    }
+  }, [sessionId, durationMinutes, intervalsCompleted, toast, backgroundTimer]);
+
+
   // Start walk session
   const startWalk = useCallback(async () => {
     if (!user) return;
@@ -139,12 +200,11 @@ export const useWalkTimer = ({ durationMinutes, audioPreference }: UseWalkTimerP
       if (error) throw error;
 
       setSessionId(data.id);
-      setTimeElapsed(0);
       setIntervalsCompleted(0);
       setCurrentPhase('fast');
       
-      // Request wake lock
-      await requestWakeLock();
+      // Start the background timer
+      backgroundTimer.start();
       
       // Start with fast phase
       playPhaseTransition('fast');
@@ -162,113 +222,28 @@ export const useWalkTimer = ({ durationMinutes, audioPreference }: UseWalkTimerP
         variant: "destructive",
       });
     }
-  }, [user, durationMinutes, playPhaseTransition, toast]);
+  }, [user, durationMinutes, playPhaseTransition, toast, backgroundTimer]);
 
   // Pause/resume walk
   const pauseWalk = useCallback(() => {
     if (currentPhase === 'paused') {
-      setCurrentPhase(timeElapsed % 360 < 180 ? 'fast' : 'slow'); // 3 min = 180 sec
+      const phaseTime = backgroundTimer.timeElapsed % 360;
+      const nextPhase = phaseTime < 180 ? 'fast' : 'slow';
+      setCurrentPhase(nextPhase);
+      backgroundTimer.resume();
     } else {
       setCurrentPhase('paused');
+      backgroundTimer.pause();
     }
-  }, [currentPhase, timeElapsed]);
+  }, [currentPhase, backgroundTimer]);
 
-  // Stop walk
-  const stopWalk = useCallback(async () => {
-    if (!sessionId) return;
-
-    try {
-      const isCompleted = timeElapsed >= durationMinutes * 60;
-      
-      await supabase
-        .from('walk_sessions')
-        .update({
-          completed_at: new Date().toISOString(),
-          intervals_completed: intervalsCompleted,
-          is_completed: isCompleted,
-        })
-        .eq('id', sessionId);
-
-      setCurrentPhase('stopped');
-      setSessionId(null);
-      releaseWakeLock();
-
-      toast({
-        title: isCompleted ? "Walk completed!" : "Walk stopped",
-        description: isCompleted 
-          ? `Congratulations! You completed your ${durationMinutes} minute walk.`
-          : `Walk session ended after ${Math.floor(timeElapsed / 60)} minutes.`,
-      });
-
-    } catch (error) {
-      console.error('Failed to stop walk session:', error);
-    }
-  }, [sessionId, timeElapsed, durationMinutes, intervalsCompleted, toast]);
-
-  // Timer effect
-  useEffect(() => {
-    if (currentPhase === 'fast' || currentPhase === 'slow') {
-      intervalRef.current = setInterval(() => {
-        setTimeElapsed(prev => {
-          const newTime = prev + 1;
-          const totalDuration = durationMinutes * 60;
-
-          // Check if walk is complete
-          if (newTime >= totalDuration) {
-            stopWalk();
-            return prev;
-          }
-
-          // Check for phase transitions (every 3 minutes = 180 seconds)
-          const phaseTime = newTime % 180;
-          const currentInterval = Math.floor(newTime / 180);
-
-          // Phase transition at start of each 3-minute interval
-          if (phaseTime === 0 && newTime > 0) {
-            const nextPhase = currentInterval % 2 === 0 ? 'fast' : 'slow';
-            setCurrentPhase(nextPhase);
-            playPhaseTransition(nextPhase);
-            
-            if (nextPhase === 'fast') {
-              setIntervalsCompleted(Math.floor(currentInterval / 2));
-            }
-          }
-
-          return newTime;
-        });
-      }, 1000);
-    } else {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-    }
-
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-    };
-  }, [currentPhase, durationMinutes, playPhaseTransition, stopWalk]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      releaseWakeLock();
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    };
-  }, []);
-
-  const timeRemaining = Math.max(0, (durationMinutes * 60) - timeElapsed);
-  const progress = (timeElapsed / (durationMinutes * 60)) * 100;
-  const currentPhaseTime = timeElapsed % 180; // Time in current 3-minute phase
+  const timeRemaining = Math.max(0, (durationMinutes * 60) - backgroundTimer.timeElapsed);
+  const progress = (backgroundTimer.timeElapsed / (durationMinutes * 60)) * 100;
+  const currentPhaseTime = backgroundTimer.timeElapsed % 180; // Time in current 3-minute phase
   const phaseProgress = (currentPhaseTime / 180) * 100;
 
   return {
-    timeElapsed,
+    timeElapsed: backgroundTimer.timeElapsed,
     timeRemaining,
     currentPhase,
     intervalsCompleted,
