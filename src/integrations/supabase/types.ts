@@ -14,7 +14,75 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          audio_preference: string | null
+          created_at: string
+          display_name: string | null
+          email: string | null
+          id: string
+          subscription_status: string | null
+          trial_end_date: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          audio_preference?: string | null
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          id?: string
+          subscription_status?: string | null
+          trial_end_date?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          audio_preference?: string | null
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          id?: string
+          subscription_status?: string | null
+          trial_end_date?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      walk_sessions: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          duration_minutes: number
+          id: string
+          intervals_completed: number
+          is_completed: boolean | null
+          started_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          duration_minutes: number
+          id?: string
+          intervals_completed?: number
+          is_completed?: boolean | null
+          started_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          duration_minutes?: number
+          id?: string
+          intervals_completed?: number
+          is_completed?: boolean | null
+          started_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
