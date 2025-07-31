@@ -17,10 +17,9 @@ interface WalkSession {
 
 interface UseWalkTimerProps {
   durationMinutes: number;
-  audioPreference: 'beep' | 'haptic';
 }
 
-export const useWalkTimer = ({ durationMinutes, audioPreference }: UseWalkTimerProps) => {
+export const useWalkTimer = ({ durationMinutes }: UseWalkTimerProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
   
@@ -106,35 +105,17 @@ export const useWalkTimer = ({ durationMinutes, audioPreference }: UseWalkTimerP
     }
   }, []);
 
-  const triggerHaptic = useCallback((pattern: number[]) => {
-    if ('vibrate' in navigator) {
-      navigator.vibrate(pattern);
-      console.log(`Triggered haptic pattern: [${pattern.join(', ')}]`);
-    } else {
-      console.log('Haptic feedback not supported');
-    }
-  }, []);
 
   const playPhaseTransition = useCallback((phase: WalkPhase) => {
-    if (audioPreference === 'beep') {
-      if (phase === 'fast') {
-        // Two quick beeps for fast phase
-        playBeep(1000, 150);
-        setTimeout(() => playBeep(1000, 150), 200);
-      } else if (phase === 'slow') {
-        // One low beep for slow phase
-        playBeep(600, 300);
-      }
-    } else if (audioPreference === 'haptic') {
-      if (phase === 'fast') {
-        // Two quick vibrations for fast phase
-        triggerHaptic([200, 100, 200]);
-      } else if (phase === 'slow') {
-        // One longer vibration for slow phase
-        triggerHaptic([400]);
-      }
+    if (phase === 'fast') {
+      // Two quick beeps for fast phase
+      playBeep(1000, 150);
+      setTimeout(() => playBeep(1000, 150), 200);
+    } else if (phase === 'slow') {
+      // One low beep for slow phase
+      playBeep(600, 300);
     }
-  }, [audioPreference, playBeep, triggerHaptic]);
+  }, [playBeep]);
 
   // Track last phase transition to prevent duplicates
   const lastPhaseTransitionRef = useRef<number>(-1);

@@ -9,7 +9,6 @@ import { Badge } from '@/components/ui/badge';
 import { Play, Pause, Square, Settings } from 'lucide-react';
 
 interface Profile {
-  audio_preference: 'beep' | 'haptic';
   subscription_status: 'trial' | 'active' | 'expired';
   trial_end_date: string;
 }
@@ -21,8 +20,7 @@ const WalkTimer = () => {
   const [loading, setLoading] = useState(true);
 
   const timer = useWalkTimer({
-    durationMinutes: selectedDuration,
-    audioPreference: profile?.audio_preference || 'beep'
+    durationMinutes: selectedDuration
   });
 
   // Load user profile
@@ -33,7 +31,7 @@ const WalkTimer = () => {
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('audio_preference, subscription_status, trial_end_date')
+          .select('subscription_status, trial_end_date')
           .eq('user_id', user.id)
           .single();
 
@@ -49,21 +47,6 @@ const WalkTimer = () => {
     loadProfile();
   }, [user]);
 
-  // Update audio preference
-  const updateAudioPreference = async (preference: 'beep' | 'haptic') => {
-    if (!user) return;
-
-    try {
-      await supabase
-        .from('profiles')
-        .update({ audio_preference: preference })
-        .eq('user_id', user.id);
-
-      setProfile(prev => prev ? { ...prev, audio_preference: preference } : null);
-    } catch (error) {
-      console.error('Failed to update audio preference:', error);
-    }
-  };
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -155,30 +138,6 @@ const WalkTimer = () => {
             )}
           </div>
 
-          {/* Feedback Preference */}
-          {canUseFeatures() && profile && (
-            <div>
-              <label className="text-sm font-medium mb-2 block">Feedback Cues</label>
-              <div className="grid grid-cols-2 gap-2">
-                <Button
-                  variant={profile.audio_preference === 'beep' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => updateAudioPreference('beep')}
-                  disabled={timer.isActive}
-                >
-                  Beep
-                </Button>
-                <Button
-                  variant={profile.audio_preference === 'haptic' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => updateAudioPreference('haptic')}
-                  disabled={timer.isActive}
-                >
-                  Haptic
-                </Button>
-              </div>
-            </div>
-          )}
         </CardContent>
       </Card>
 
@@ -279,7 +238,7 @@ const WalkTimer = () => {
             <p>• Repeat this pattern for the entire duration</p>
             {canUseFeatures() && (
               <p className="text-muted-foreground mt-3">
-                Audio or haptic cues will guide you through each phase change.
+                Audio cues will guide you through each phase change.
               </p>
             )}
           </div>
