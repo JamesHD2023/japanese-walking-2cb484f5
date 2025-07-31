@@ -10,7 +10,7 @@ const Landing = () => {
         {/* Logo */}
         <div className="px-5">
           <img 
-            src="/lovable-uploads/b727bff7-0888-40d2-8f15-645eb9403cfe.png" 
+            src="/lovable-uploads/4a9ea1d2-2aee-45e3-8178-9dc5668dcacc.png" 
             alt="Japanese Walking Logo" 
             className="w-full"
           />
