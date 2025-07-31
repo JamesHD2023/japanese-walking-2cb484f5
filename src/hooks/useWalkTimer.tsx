@@ -83,7 +83,7 @@ export const useWalkTimer = ({ durationMinutes, audioPreference }: UseWalkTimerP
     oscillator.frequency.value = frequency;
     oscillator.type = 'sine';
 
-    gainNode.gain.setValueAtTime(1.0, audioContextRef.current.currentTime);
+    gainNode.gain.setValueAtTime(2.0, audioContextRef.current.currentTime);
     gainNode.gain.exponentialRampToValueAtTime(0.01, audioContextRef.current.currentTime + duration / 1000);
 
     oscillator.start(audioContextRef.current.currentTime);
