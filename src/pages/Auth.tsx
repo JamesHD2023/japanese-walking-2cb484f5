@@ -48,7 +48,7 @@ const Auth = () => {
             <img 
               src="/lovable-uploads/38d1c796-4c12-4e11-82e0-cb298cf3b213.png" 
               alt="Japanese Walking Logo" 
-              className="mx-auto w-full max-w-sm"
+              className="mx-auto w-full max-w-lg"
             />
           </div>
           <CardTitle className="text-2xl font-bold">Japanese Walking</CardTitle>
