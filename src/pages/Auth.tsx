@@ -11,11 +11,32 @@ const Auth = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [emailError, setEmailError] = useState('');
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
 
+  const validateEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const handleEmailChange = (value: string) => {
+    setEmail(value);
+    if (value && !validateEmail(value)) {
+      setEmailError('Please enter a valid email address');
+    } else {
+      setEmailError('');
+    }
+  };
+
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!validateEmail(email)) {
+      setEmailError('Please enter a valid email address');
+      return;
+    }
+    
     setLoading(true);
     
     const { error } = await signIn(email, password);
@@ -28,6 +49,12 @@ const Auth = () => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!validateEmail(email)) {
+      setEmailError('Please enter a valid email address');
+      return;
+    }
+    
     setLoading(true);
     
     const { error } = await signUp(email, password);
@@ -35,6 +62,7 @@ const Auth = () => {
       // User will need to confirm email before they can sign in
       setEmail('');
       setPassword('');
+      setEmailError('');
     }
     
     setLoading(false);
@@ -92,17 +120,21 @@ const Auth = () => {
             
             <TabsContent value="signin">
               <form onSubmit={handleSignIn} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="Enter your email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                </div>
+                 <div className="space-y-2">
+                   <Label htmlFor="email">Email</Label>
+                   <Input
+                     id="email"
+                     type="email"
+                     placeholder="Enter your email"
+                     value={email}
+                     onChange={(e) => handleEmailChange(e.target.value)}
+                     required
+                     className={emailError ? 'border-destructive' : ''}
+                   />
+                   {emailError && (
+                     <p className="text-sm text-destructive">{emailError}</p>
+                   )}
+                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="password">Password</Label>
                   <Input
@@ -122,17 +154,21 @@ const Auth = () => {
 
             <TabsContent value="signup">
               <form onSubmit={handleSignUp} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="signup-email">Email</Label>
-                  <Input
-                    id="signup-email"
-                    type="email"
-                    placeholder="Enter your email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                </div>
+                 <div className="space-y-2">
+                   <Label htmlFor="signup-email">Email</Label>
+                   <Input
+                     id="signup-email"
+                     type="email"
+                     placeholder="Enter your email"
+                     value={email}
+                     onChange={(e) => handleEmailChange(e.target.value)}
+                     required
+                     className={emailError ? 'border-destructive' : ''}
+                   />
+                   {emailError && (
+                     <p className="text-sm text-destructive">{emailError}</p>
+                   )}
+                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="signup-password">Password</Label>
                   <Input
