@@ -102,10 +102,6 @@ const Auth = () => {
               </li>
               <li className="flex items-center gap-2">
                 <div className="w-1.5 h-1.5 bg-primary rounded-full"></div>
-                <span>Monitor health benefits and improvements</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 bg-primary rounded-full"></div>
                 <span>Sync across all your devices</span>
               </li>
             </ul>
