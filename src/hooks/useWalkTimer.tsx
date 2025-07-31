@@ -30,11 +30,30 @@ export const useWalkTimer = ({ durationMinutes, audioPreference }: UseWalkTimerP
   
   const audioContextRef = useRef<AudioContext | null>(null);
 
-  // Create audio context
+  // Create audio context and handle user interaction
   useEffect(() => {
+    let cleanupListeners: (() => void) | undefined;
+
     const initializeAudio = async () => {
       try {
         audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+        
+        // Add user interaction handler for mobile audio context activation
+        const handleUserInteraction = async () => {
+          if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
+            await audioContextRef.current.resume();
+            console.log('Audio context resumed after user interaction');
+          }
+        };
+
+        // Listen for user interactions to activate audio context
+        document.addEventListener('touchstart', handleUserInteraction);
+        document.addEventListener('click', handleUserInteraction);
+        
+        cleanupListeners = () => {
+          document.removeEventListener('touchstart', handleUserInteraction);
+          document.removeEventListener('click', handleUserInteraction);
+        };
       } catch (error) {
         console.error('Failed to initialize audio context:', error);
       }
@@ -43,6 +62,7 @@ export const useWalkTimer = ({ durationMinutes, audioPreference }: UseWalkTimerP
     initializeAudio();
 
     return () => {
+      if (cleanupListeners) cleanupListeners();
       if (audioContextRef.current) {
         audioContextRef.current.close();
       }
@@ -53,25 +73,37 @@ export const useWalkTimer = ({ durationMinutes, audioPreference }: UseWalkTimerP
   const playBeep = useCallback(async (frequency: number = 800, duration: number = 200) => {
     if (!audioContextRef.current) return;
 
-    // Resume audio context if suspended (important for mobile background)
-    if (audioContextRef.current.state === 'suspended') {
-      await audioContextRef.current.resume();
+    try {
+      // Resume audio context if suspended (important for mobile background)
+      if (audioContextRef.current.state === 'suspended') {
+        await audioContextRef.current.resume();
+      }
+
+      // Ensure audio context is running
+      if (audioContextRef.current.state !== 'running') {
+        console.log('Audio context not running, trying to resume...');
+        await audioContextRef.current.resume();
+      }
+
+      const oscillator = audioContextRef.current.createOscillator();
+      const gainNode = audioContextRef.current.createGain();
+
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContextRef.current.destination);
+
+      oscillator.frequency.value = frequency;
+      oscillator.type = 'sine';
+
+      gainNode.gain.setValueAtTime(2.0, audioContextRef.current.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContextRef.current.currentTime + duration / 1000);
+
+      oscillator.start(audioContextRef.current.currentTime);
+      oscillator.stop(audioContextRef.current.currentTime + duration / 1000);
+      
+      console.log(`Played beep at ${frequency}Hz for ${duration}ms`);
+    } catch (error) {
+      console.error('Failed to play beep:', error);
     }
-
-    const oscillator = audioContextRef.current.createOscillator();
-    const gainNode = audioContextRef.current.createGain();
-
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContextRef.current.destination);
-
-    oscillator.frequency.value = frequency;
-    oscillator.type = 'sine';
-
-    gainNode.gain.setValueAtTime(2.0, audioContextRef.current.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContextRef.current.currentTime + duration / 1000);
-
-    oscillator.start(audioContextRef.current.currentTime);
-    oscillator.stop(audioContextRef.current.currentTime + duration / 1000);
   }, []);
 
   const playVoiceCue = useCallback((message: string) => {
@@ -102,6 +134,9 @@ export const useWalkTimer = ({ durationMinutes, audioPreference }: UseWalkTimerP
     }
   }, [audioPreference, playBeep, playVoiceCue]);
 
+  // Track last phase transition to prevent duplicates
+  const lastPhaseTransitionRef = useRef<number>(-1);
+
   // Handle timer tick with phase transitions
   const handleTimerTick = useCallback((timeElapsed: number) => {
     const totalDuration = durationMinutes * 60;
@@ -131,25 +166,29 @@ export const useWalkTimer = ({ durationMinutes, audioPreference }: UseWalkTimerP
     }
 
     // Check for phase transitions (every 3 minutes = 180 seconds)
-    const phaseTime = timeElapsed % 180;
     const currentInterval = Math.floor(timeElapsed / 180);
-
-    // Phase transition at start of each 3-minute interval (use range check for mobile reliability)
-    if (phaseTime <= 2 && timeElapsed > 0) {
+    const phaseTransitionTime = currentInterval * 180;
+    
+    // Only trigger phase transition once per interval and prevent duplicates
+    if (timeElapsed >= phaseTransitionTime && 
+        timeElapsed > 0 && 
+        lastPhaseTransitionRef.current !== currentInterval) {
+      
       const nextPhase = currentInterval % 2 === 0 ? 'fast' : 'slow';
       
-      // Only transition if we're not already in the correct phase
-      if (currentPhase !== nextPhase && currentPhase !== 'paused') {
-        console.log(`Phase transition at ${timeElapsed}s: ${currentPhase} -> ${nextPhase}`);
+      // Only transition if we're not paused
+      if (currentPhase !== 'paused') {
+        console.log(`Phase transition at ${timeElapsed}s (interval ${currentInterval}): -> ${nextPhase}`);
         setCurrentPhase(nextPhase);
         playPhaseTransition(nextPhase);
+        lastPhaseTransitionRef.current = currentInterval;
         
         if (nextPhase === 'fast') {
           setIntervalsCompleted(Math.floor(currentInterval / 2));
         }
       }
     }
-  }, [durationMinutes, playPhaseTransition, sessionId, intervalsCompleted, toast]);
+  }, [durationMinutes, playPhaseTransition, sessionId, intervalsCompleted, toast, currentPhase]);
 
   const backgroundTimer = useBackgroundTimer({
     onTick: handleTimerTick,

@@ -40,15 +40,25 @@ export const useBackgroundTimer = ({ onTick, isActive }: UseBackgroundTimerProps
         pausedTimeRef.current = Date.now() - startTimeRef.current;
       }
     } else {
-      // App came to foreground - recalculate time
+      // App came to foreground - recalculate time and trigger any missed callbacks
       if (startTimeRef.current && isActive) {
         const now = Date.now();
         const timeSinceStart = now - startTimeRef.current;
-        setTimeElapsed(Math.floor(timeSinceStart / 1000));
-        onTick(Math.floor(timeSinceStart / 1000));
+        const newElapsed = Math.floor(timeSinceStart / 1000);
+        const oldElapsed = timeElapsed;
+        
+        setTimeElapsed(newElapsed);
+        
+        // Check if we need to trigger callbacks for missed seconds while backgrounded
+        if (newElapsed > oldElapsed) {
+          // Trigger onTick for any missed intervals while we were backgrounded
+          for (let i = oldElapsed + 1; i <= newElapsed; i++) {
+            onTick(i);
+          }
+        }
       }
     }
-  }, [isActive, onTick]);
+  }, [isActive, onTick, timeElapsed]);
 
   // Start timer
   const start = useCallback(() => {
